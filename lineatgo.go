@@ -14,6 +14,7 @@ import (
     "io/ioutil"
     "encoding/json"
     "github.com/mattn/go-scan"
+    "strconv"
 )
 
 type Bot struct {
@@ -31,10 +32,16 @@ type Api struct {
     Bots []Bot
 }
 
+/*
+NewApi create a new api.
+ */
 func NewApi(mail, pass string) *Api {
     return &Api{MailAddress: mail, Password: pass}
 }
 
+/*
+GetBotIdByName resolve the accountName into BotId
+ */
 func (a *Api) GetBotIdByName(AccountName string) string {
     var bi string
     for _, b := range a.Bots{
@@ -45,6 +52,9 @@ func (a *Api) GetBotIdByName(AccountName string) string {
     return bi
 }
 
+/*
+Login log in account using mail address and password
+ */
 func (a *Api) Login()  {
     driver := agouti.ChromeDriver(agouti.ChromeOptions("args", []string{"--headless", "--disable-gpu"}), )
     if err := driver.Start(); err != nil {
@@ -57,15 +67,15 @@ func (a *Api) Login()  {
         log.Fatalf("Failed to open page:%v", err)
     }
 
-    if err := page.Navigate("https://admin-official.line.me/"); err != nil { //ログイン画面を開く
+    if err := page.Navigate("https://admin-official.line.me/"); err != nil {
         log.Fatalf("Failed to navigate:%v", err)
     }
 
-    mailBox := page.FindByID("id")     //メアドボックス
-    passBox := page.FindByID("passwd") //パスワードボックス
-    mailBox.Fill(a.MailAddress) //メアドボックスにメアドを入力
-    passBox.Fill(a.Password) //パスワードボックスにメアドを入力
-    if err := page.FindByClass("MdBtn03Login").Submit(); err != nil { //ログインサブミットのボタン
+    mailBox := page.FindByID("id")
+    passBox := page.FindByID("passwd")
+    mailBox.Fill(a.MailAddress)
+    passBox.Fill(a.Password)
+    if err := page.FindByClass("MdBtn03Login").Submit(); err != nil {
         log.Fatalf("Failed to login:%v", err)
     }
 
@@ -78,7 +88,7 @@ func (a *Api) Login()  {
     var limit bool
     ctx := context.Background()
     ctx, cancelTimer := context.WithCancel(ctx)
-    fmt.Println(fmt.Sprintf("携帯のLINEで以下のPINコードを入力してください: %v", PINcode))//PINコードを表示
+    fmt.Println(fmt.Sprintf("携帯のLINEで以下のPINコードを入力してください: %v", PINcode))
     go timer(140000, ctx, &limit)
     for {
         title, _ := page.Title()
@@ -95,6 +105,7 @@ func (a *Api) Login()  {
     }
     c, _ := page.GetCookies()
     a.createClient(c)
+    a.getXRT()
     a.getBotInfo()
 }
 
@@ -119,14 +130,29 @@ func (a *Api) getBotInfo() {
     cont, _ := ioutil.ReadAll(resp.Body)
     var ij interface{}
     json.Unmarshal([]byte(string(cont)), &ij)
-    var v Bot
-    var b []Bot
+    var (
+        v Bot
+        b []Bot
+        tmp int
+    )
     for i:=0; i<strings.Count(string(cont), "botId"); i++ {
         scan.ScanTree(ij, fmt.Sprintf("/list[%v]/displayName", i), &v.Name)
-        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/botId", i), &v.BotId)
+        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/botId", i), &tmp)
+        v.BotId = strconv.Itoa(tmp)
         b = append(b, v)
     }
     a.Bots = b
+}
+
+func (a *Api) getXRT()  {
+    request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
+    request.Header.Set("Accept-Language", "ja")
+    resp, _ := a.Client.Do(request)
+    defer resp.Body.Close()
+    cont, _ := ioutil.ReadAll(resp.Body)
+    XRT := string(cont)[strings.Index(string(cont), "XRT") + 7:strings.Index(string(cont), "XRT") + 60]
+    XRT = XRT[:strings.Index(XRT, ";") - 1]
+    a.XRT = XRT
 }
 
 func timer(wait int, ctx context.Context, l *bool) {
