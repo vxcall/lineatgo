@@ -1,3 +1,4 @@
+[![GoDoc](https://godoc.org/github.com/s3pt3mb3r/lineatgo?status.svg)](https://godoc.org/github.com/s3pt3mb3r/lineatgo)
 # lineatgo
 This is a unofficial LINE@ API that was implemented in pure go
 
