@@ -1,4 +1,5 @@
 [![GoDoc](https://godoc.org/github.com/s3pt3mb3r/lineatgo?status.svg)](https://godoc.org/github.com/s3pt3mb3r/lineatgo)
+[![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 # lineatgo
 This is a unofficial LINE@ API that was implemented in pure go
 
@@ -41,7 +42,7 @@ func main()  {
 - [ ] Fix DeletePostAll function
 - [ ] Enable to select authority type in getAuth function
 - [ ] Enable to Delete paymaster user's clearance
-- [ ] Enable to Post to time line
+- [ ] Enable to Post on time line
 
 ### At last
 Probably, being overlook some factors, I can't code Login() function without web driver
