@@ -17,19 +17,31 @@ package main
 
 import (
     "github.com/s3pt3mb3r/lineatgo"
+    "log"
     "fmt"
 )
 
-func main() {
-    api := lineatgo.NewApi("example@mail.com", "passw0rd")
-
-    api.Login()
-    botId := api.GetBotIdByName("BOT_NAME")
-
-    api.DeletePostAll(botId) //delete all posts
-    api.GetAuthURL(botId) //get authority URL
+func main()  {
+    api := lineatgo.NewApi("personium85@gmail.com", "Am4ne5262521")
+    bot, err := api.NewBot("@xur2140w")
+    if err != nil {
+        log.Println(err)
+    }
+    fmt.Println(bot.GetAuthURL())
+    for _, u := range bot.AuthUserList.Users {
+        if u.Name == "林田 周" {
+            u.Delete()
+            break
+        }
+    }
 }
 ```
+
+## Todo
+- [ ] Fix DeletePostAll function
+- [ ] Enable to select authority type in getAuth function
+- [ ] Enable to Delete paymaster user's clearance
+- [ ] Enable to Post to time line
 
 ### At last
 Probably, being overlook some factors, I can't code Login() function without web driver

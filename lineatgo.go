@@ -15,12 +15,16 @@ import (
     "encoding/json"
     "github.com/mattn/go-scan"
     "strconv"
+    "github.com/PuerkitoBio/goquery"
+    "github.com/pkg/errors"
 )
 
 type Bot struct {
     Name string
-    AccountId string
+    LineId string
     BotId string
+    Api *Api
+    AuthUserList *AuthUserList
 }
 
 type Api struct {
@@ -29,33 +33,35 @@ type Api struct {
     Client *http.Client
     XRT string
     CsrfToken string
-    Bots []Bot
 }
 
 /*
 NewApi create a new api.
  */
 func NewApi(mail, pass string) *Api {
-    return &Api{MailAddress: mail, Password: pass}
+    var api = Api{MailAddress: mail, Password: pass}
+    api.login()
+    return &api
 }
 
 /*
-GetBotIdByName resolve the accountName into BotId
+NewBot create a new bot.
  */
-func (a *Api) GetBotIdByName(AccountName string) string {
-    var bi string
-    for _, b := range a.Bots{
-        if b.Name == AccountName {
-            bi = b.BotId
-        }
+func (a *Api) NewBot(lineId string) (Bot, error) {
+    var bot = Bot{LineId: lineId, Api: a}
+    err := bot.getBotInfo()
+    if err != nil {
+        return bot,  err
     }
-    return bi
+    bot.getCsrfToken()
+    bot.findAuthUser()
+    return bot, nil
 }
 
 /*
 Login log in account using mail address and password
  */
-func (a *Api) Login()  {
+func (a *Api) login() {
     driver := agouti.ChromeDriver(agouti.ChromeOptions("args", []string{"--headless", "--disable-gpu"}), )
     if err := driver.Start(); err != nil {
         log.Fatalf("Failed to start driver:%v", err)
@@ -106,7 +112,6 @@ func (a *Api) Login()  {
     c, _ := page.GetCookies()
     a.createClient(c)
     a.getXRT()
-    a.getBotInfo()
 }
 
 func (a *Api) createClient(c []*http.Cookie) {
@@ -122,26 +127,34 @@ func (a *Api) createClient(c []*http.Cookie) {
     }
 }
 
-func (a *Api) getBotInfo() {
+func (b *Bot) getBotInfo() error {
     request, _ := http.NewRequest("GET", "https://admin-official.line.me/api/basic/bot/list?_=1510425201579&count=10&page=1", nil)
     request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-    resp, _ := a.Client.Do(request)
+    resp, _ := b.Api.Client.Do(request)
     defer resp.Body.Close()
     cont, _ := ioutil.ReadAll(resp.Body)
     var ij interface{}
     json.Unmarshal([]byte(string(cont)), &ij)
     var (
-        v Bot
-        b []Bot
-        tmp int
+        displayName string
+        lineId string
+        botId int
     )
     for i:=0; i<strings.Count(string(cont), "botId"); i++ {
-        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/displayName", i), &v.Name)
-        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/botId", i), &tmp)
-        v.BotId = strconv.Itoa(tmp)
-        b = append(b, v)
+        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/lineId", i), &lineId)
+        if lineId != b.LineId {
+            continue
+        }
+        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/displayName", i), &displayName)
+        scan.ScanTree(ij, fmt.Sprintf("/list[%v]/botId", i), &botId)
+        b.Name = displayName
+        b.BotId = strconv.Itoa(botId)
+        break
     }
-    a.Bots = b
+    if b.Name == "" {
+        return errors.New(fmt.Sprintf(`ERROR: Specified bot "%v" was not found.`, b.LineId))
+    }
+    return nil
 }
 
 func (a *Api) getXRT()  {
@@ -153,6 +166,25 @@ func (a *Api) getXRT()  {
     XRT := string(cont)[strings.Index(string(cont), "XRT") + 7:strings.Index(string(cont), "XRT") + 60]
     XRT = XRT[:strings.Index(XRT, ";") - 1]
     a.XRT = XRT
+}
+
+func (b *Bot) getCsrfToken() {
+    request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
+    request.Header.Set("Accept-Language", "ja")
+    resp, _ := b.Api.Client.Do(request)
+    defer resp.Body.Close()
+
+    doc, err := goquery.NewDocumentFromResponse(resp)
+    if err != nil {
+        log.Fatalf("create document error: %v", err)
+    }
+    s := doc.Find("script#postEditForm\\.html").Text()
+
+    doc2, err := goquery.NewDocumentFromReader(strings.NewReader(s))
+    if err != nil {
+        log.Fatalf("create document error: %v", err)
+    }
+    b.Api.CsrfToken,  _ = doc2.Find("#postForm > input").First().Attr("value")
 }
 
 func timer(wait int, ctx context.Context, l *bool) {
