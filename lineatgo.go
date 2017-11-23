@@ -152,7 +152,7 @@ func (b *Bot) getBotInfo() error {
         break
     }
     if b.Name == "" {
-        return errors.New(fmt.Sprintf(`ERROR: Specified bot "%v" was not found.`, b.LineId))
+        return errors.New(fmt.Sprintf(`ERROR: Specified bot "%v" was not found.\nUse other LINE account and try again:)`, b.LineId))
     }
     return nil
 }

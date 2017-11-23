@@ -23,15 +23,18 @@ import (
 )
 
 func main()  {
-    api := lineatgo.NewApi("personium85@gmail.com", "Am4ne5262521")
-    bot, err := api.NewBot("@xur2140w")
+    api := lineatgo.NewApi("MAIL_ADDRESS", "PASSWORD")
+    bot, err := api.NewBot("@LINEID")
     if err != nil {
         log.Println(err)
     }
-    fmt.Println(bot.GetAuthURL())
+    url := bot.GetAuthURL(lineatgo.Administrator)
+    //what else: lineatgo.Operator, lineatgo.LimitedOperator, lineatgo.Messenger
+    fmt.Println(url)
+
     for _, u := range bot.AuthUserList.Users {
-        if u.Name == "林田 周" {
-            u.Delete()
+        if u.Name == "target_user" {
+            u.Delete() //delet clearance
             break
         }
     }
@@ -40,7 +43,7 @@ func main()  {
 
 ## Todo
 - [ ] Fix DeletePostAll function
-- [ ] Enable to select authority type in getAuth function
+- [x] Enable to select authority type in getAuth function
 - [ ] Enable to Delete paymaster user's clearance
 - [ ] Enable to Post on time line
 
