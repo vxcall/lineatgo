@@ -44,7 +44,7 @@ func main()  {
 ## Todo
 - [ ] Fix DeletePostAll function
 - [x] Enable to select authority type in getAuth function
-- [ ] Enable to Delete paymaster user's clearance
+- [x] Enable to Delete paymaster user's clearance
 - [ ] Enable to Post on time line
 
 ### At last
