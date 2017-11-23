@@ -88,13 +88,13 @@ func (a *Api) login() {
     time.Sleep(1000 * time.Millisecond)
     PINcode, err := page.FindByClass("mdLYR04PINCode").Text()
     if err != nil {
-        log.Println("メールアドレスまたはパスワードが間違っています。")
+        log.Println("mailaddress ore password was wrong")
     }
 
     var limit bool
     ctx := context.Background()
     ctx, cancelTimer := context.WithCancel(ctx)
-    fmt.Println(fmt.Sprintf("携帯のLINEで以下のPINコードを入力してください: %v", PINcode))
+    fmt.Println(fmt.Sprintf("press the PINCODE below in LINE mobile: %v", PINcode))
     go timer(140000, ctx, &limit)
     for {
         title, _ := page.Title()
@@ -105,7 +105,7 @@ func (a *Api) login() {
         }
 
         if limit {
-            log.Println("時間切れです。")
+            log.Println("oh. timeout:(")
             limit = false
         }
     }
