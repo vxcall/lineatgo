@@ -130,9 +130,9 @@ func (a *Api) createClient(c []*http.Cookie) {
 func (b *Bot) getBotInfo() error {
     request, _ := http.NewRequest("GET", "https://admin-official.line.me/api/basic/bot/list?_=1510425201579&count=10&page=1", nil)
     request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-    resp, _ := b.Api.Client.Do(request)
-    defer resp.Body.Close()
-    cont, _ := ioutil.ReadAll(resp.Body)
+    response, _ := b.Api.Client.Do(request)
+    defer response.Body.Close()
+    cont, _ := ioutil.ReadAll(response.Body)
     var ij interface{}
     json.Unmarshal([]byte(string(cont)), &ij)
     var (
@@ -159,10 +159,9 @@ func (b *Bot) getBotInfo() error {
 
 func (a *Api) getXRT()  {
     request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
-    request.Header.Set("Accept-Language", "ja")
-    resp, _ := a.Client.Do(request)
-    defer resp.Body.Close()
-    cont, _ := ioutil.ReadAll(resp.Body)
+    response, _ := a.Client.Do(request)
+    defer response.Body.Close()
+    cont, _ := ioutil.ReadAll(response.Body)
     XRT := string(cont)[strings.Index(string(cont), "XRT") + 7:strings.Index(string(cont), "XRT") + 60]
     XRT = XRT[:strings.Index(XRT, ";") - 1]
     a.XRT = XRT
@@ -170,11 +169,10 @@ func (a *Api) getXRT()  {
 
 func (b *Bot) getCsrfToken() {
     request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
-    request.Header.Set("Accept-Language", "ja")
-    resp, _ := b.Api.Client.Do(request)
-    defer resp.Body.Close()
+    response, _ := b.Api.Client.Do(request)
+    defer response.Body.Close()
 
-    doc, err := goquery.NewDocumentFromResponse(resp)
+    doc, err := goquery.NewDocumentFromResponse(response)
     if err != nil {
         log.Fatalf("create document error: %v", err)
     }

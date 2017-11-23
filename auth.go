@@ -24,9 +24,9 @@ func (b *Bot) GetAuthURL(role string) string {
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/userlist/auth/url", b.BotId), strings.NewReader(v.Encode()))
     request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
     request.Header.Set("X-CSRF-Token", b.Api.XRT)
-    resp, _ := b.Api.Client.Do(request)
-    defer resp.Body.Close()
-    cont, _ := ioutil.ReadAll(resp.Body)
+    response, _ := b.Api.Client.Do(request)
+    defer response.Body.Close()
+    cont, _ := ioutil.ReadAll(response.Body)
     return string(cont)
 }
 
@@ -47,10 +47,10 @@ func (b *Bot) findAuthUser() {
     request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/userlist/", b.BotId), nil)
     request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
     request.Header.Set("X-CSRF-Token", b.Api.XRT)
-    resp, _ := b.Api.Client.Do(request)
-    defer resp.Body.Close()
+    response, _ := b.Api.Client.Do(request)
+    defer response.Body.Close()
     var ul []AuthUser
-    doc, _ := goquery.NewDocumentFromResponse(resp)
+    doc, _ := goquery.NewDocumentFromResponse(response)
     doc.Find("div.MdCMN08ImgSet").Each(func(_ int, s *goquery.Selection) {
         t := s.Find("p.mdCMN08Ttl").Text()
         u := parseAuthTxt(t)
@@ -106,8 +106,8 @@ func (u *AuthUser) Delete() error {
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me%v", delurl), nil)
     request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
     request.Header.Set("X-CSRF-Token", u.Api.XRT)
-    resp, _ := u.Api.Client.Do(request)
-    defer resp.Body.Close()
+    response, _ := u.Api.Client.Do(request)
+    defer response.Body.Close()
     return nil
 }
 
@@ -115,6 +115,6 @@ func (u AuthUser) SetPaymaster()  {
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/userlist/api/users/payperson/%v", u.BotId, u.Id), nil)
     request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
     request.Header.Set("X-CSRF-Token", u.Api.XRT)
-    resp, _ := u.Api.Client.Do(request)
-    defer resp.Body.Close()
+    response, _ := u.Api.Client.Do(request)
+    defer response.Body.Close()
 }

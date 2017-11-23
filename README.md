@@ -32,20 +32,22 @@ func main()  {
     //what else: lineatgo.Operator, lineatgo.LimitedOperator, lineatgo.Messenger
     fmt.Println(url)
 
-    for _, u := range bot.AuthUserList.Users {
-        if u.Name == "target_user" {
-            u.Delete() //delet clearance
-            break
-        }
+    qr := bot.GetQRCode()
+    file, err := os.OpenFile("test.png", os.O_RDWR|os.O_CREATE, 0666)
+    if err != nil {
+        log.Fatal(err)
     }
+    defer file.Close()
+    file.Write(qr)
 }
 ```
 
 ## Todo
 - [x] Enable to select authority type in getAuth function
 - [x] Enable to Delete paymaster user's clearance
+- [x] Enable to Post some text on time line
+- [ ] Enable to Post image or video on time line
 - [ ] Fix DeletePostAll function
-- [ ] Enable to Post on time line
 
 ### At last
 Probably, being overlook some factors, I can't code Login() function without web driver
