@@ -42,9 +42,9 @@ func main()  {
 ```
 
 ## Todo
-- [ ] Fix DeletePostAll function
 - [x] Enable to select authority type in getAuth function
 - [x] Enable to Delete paymaster user's clearance
+- [ ] Fix DeletePostAll function
 - [ ] Enable to Post on time line
 
 ### At last
