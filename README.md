@@ -28,6 +28,7 @@ func main()  {
     if err != nil {
         log.Println(err)
     }
+    bot.PostText("This is a post via lineatgo")
     url := bot.GetAuthURL(lineatgo.Administrator)
     //what else: lineatgo.Operator, lineatgo.LimitedOperator, lineatgo.Messenger
     fmt.Println(url)
