@@ -23,44 +23,43 @@ type Bot struct {
     Name string
     LineId string
     BotId string
-    Api *Api
+    api *Api
     AuthUserList *AuthUserList
 }
 
 type Api struct {
-    MailAddress string
-    Password string
-    Client *http.Client
-    XRT string
-    CsrfToken string
+    mailAddress string
+    password string
+    client *http.Client
+    xrt string
+    csrfToken1 string
+    csrfToken2 string
 }
 
 /*
-NewApi create a new api.
+NewApi creates a new api.
  */
 func NewApi(mail, pass string) *Api {
-    var api = Api{MailAddress: mail, Password: pass}
+    var api = Api{mailAddress: mail, password: pass}
     api.login()
     return &api
 }
 
 /*
-NewBot create a new bot.
+NewBot creates a new bot.
  */
 func (a *Api) NewBot(lineId string) (Bot, error) {
-    var bot = Bot{LineId: lineId, Api: a}
+    var bot = Bot{LineId: lineId, api: a}
     err := bot.getBotInfo()
     if err != nil {
         return bot,  err
     }
-    bot.getCsrfToken()
+    go bot.getCsrfToken1()
+    go bot.getCsrfToken2()
     bot.findAuthUser()
     return bot, nil
 }
 
-/*
-Login log in account using mail address and password
- */
 func (a *Api) login() {
     driver := agouti.ChromeDriver(agouti.ChromeOptions("args", []string{"--headless", "--disable-gpu"}), )
     if err := driver.Start(); err != nil {
@@ -79,8 +78,8 @@ func (a *Api) login() {
 
     mailBox := page.FindByID("id")
     passBox := page.FindByID("passwd")
-    mailBox.Fill(a.MailAddress)
-    passBox.Fill(a.Password)
+    mailBox.Fill(a.mailAddress)
+    passBox.Fill(a.password)
     if err := page.FindByClass("MdBtn03Login").Submit(); err != nil {
         log.Fatalf("Failed to login:%v", err)
     }
@@ -121,7 +120,7 @@ func (a *Api) createClient(c []*http.Cookie) {
     tr := &http.Transport{
         TLSClientConfig: &tls.Config{ServerName: "*.line.me"},
     }
-    a.Client = &http.Client{
+    a.client = &http.Client{
         Transport: tr,
         Jar: jar,
     }
@@ -130,7 +129,7 @@ func (a *Api) createClient(c []*http.Cookie) {
 func (b *Bot) getBotInfo() error {
     request, _ := http.NewRequest("GET", "https://admin-official.line.me/api/basic/bot/list?_=1510425201579&count=10&page=1", nil)
     request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-    response, _ := b.Api.Client.Do(request)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
     cont, _ := ioutil.ReadAll(response.Body)
     var ij interface{}
@@ -159,17 +158,17 @@ func (b *Bot) getBotInfo() error {
 
 func (a *Api) getXRT()  {
     request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
-    response, _ := a.Client.Do(request)
+    response, _ := a.client.Do(request)
     defer response.Body.Close()
     cont, _ := ioutil.ReadAll(response.Body)
     XRT := string(cont)[strings.Index(string(cont), "XRT") + 7:strings.Index(string(cont), "XRT") + 60]
     XRT = XRT[:strings.Index(XRT, ";") - 1]
-    a.XRT = XRT
+    a.xrt = XRT
 }
 
-func (b *Bot) getCsrfToken() {
+func (b *Bot) getCsrfToken1() {
     request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
-    response, _ := b.Api.Client.Do(request)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
 
     doc, err := goquery.NewDocumentFromResponse(response)
@@ -182,7 +181,30 @@ func (b *Bot) getCsrfToken() {
     if err != nil {
         log.Fatalf("create document error: %v", err)
     }
-    b.Api.CsrfToken,  _ = doc2.Find("#postForm > input").First().Attr("value")
+    b.api.csrfToken1,  _ = doc2.Find("#postForm > input").First().Attr("value")
+}
+
+func (b *Bot) getCsrfToken2()  {
+    request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/resign/", b.BotId), nil)
+    response, _ := b.api.client.Do(request)
+    defer response.Body.Close()
+    doc, _ := goquery.NewDocumentFromResponse(response)
+    b.api.csrfToken2, _ = doc.Find("form > input").Attr("value")
+}
+
+/*
+DeleteBot eliminates itself
+ */
+func (b *Bot) DeleteBot()  {
+    v := url.Values{}
+    v.Set("csrf_token", b.api.csrfToken2)
+    v.Set("agree", "on")
+    request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/resign/", b.BotId), strings.NewReader(v.Encode()))
+    request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+    request.Header.Set("Upgrade-Insecure-Requests", "1")
+    response, _ := b.api.client.Do(request)
+    defer response.Body.Close()
+    fmt.Println(response.StatusCode)
 }
 
 func timer(wait int, ctx context.Context, l *bool) {

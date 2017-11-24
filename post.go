@@ -10,11 +10,11 @@ import (
 )
 
 /*
-DeletePostAll delete all of post the account has.
+DeletePostAll deletes all of post the account has.
  */
 func (b *Bot) DeletePostAll() {
     request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
-    response, _ := b.Api.Client.Do(request)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
 
     doc, err := goquery.NewDocumentFromResponse(response)
@@ -38,7 +38,7 @@ func (b *Bot) retrievePost(doc *goquery.Document, endChan chan bool) {
     if ok {
         go func() {
             request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/%v", b.BotId, l), nil)
-            response, _ := b.Api.Client.Do(request)
+            response, _ := b.api.client.Do(request)
             defer response.Body.Close()
             doc, err := goquery.NewDocumentFromResponse(response)
             if err != nil {
@@ -50,17 +50,20 @@ func (b *Bot) retrievePost(doc *goquery.Document, endChan chan bool) {
 }
 
 func (b *Bot) postDel(uri string, endChan chan bool) {
-    v := url.Values{"csrf_token": {b.Api.CsrfToken}}
+    v := url.Values{"csrf_token": {b.api.csrfToken1}}
     request, _ := http.NewRequest("POST", uri, strings.NewReader(v.Encode()))
     request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-    response, _ := b.Api.Client.Do(request)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
     endChan <- true
 }
 
+/*
+PostText makes it possible to post composed of text only
+ */
 func (b *Bot) PostText(text string) {
     v := url.Values{}
-    v.Set("csrf_token", b.Api.CsrfToken)
+    v.Set("csrf_token", b.api.csrfToken1)
     v.Set("scheduled", "")
     v.Set("sendDate", "")
     v.Set("sendHour", "0")
@@ -72,6 +75,6 @@ func (b *Bot) PostText(text string) {
     v.Set("draftId", "")
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/home/api/posts", b.BotId), strings.NewReader(v.Encode()))
     request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-    response, _ := b.Api.Client.Do(request)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
 }

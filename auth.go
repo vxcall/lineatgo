@@ -17,14 +17,14 @@ const (
     Messenger = "MESSENGER"
 )
 /*
-GetAuthURL retrieve a url to enable access the account.
+GetAuthURL retrieves a url to enable access the account.
  */
 func (b *Bot) GetAuthURL(role string) string {
     v := url.Values{"role": {role}}
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/userlist/auth/url", b.BotId), strings.NewReader(v.Encode()))
     request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-    request.Header.Set("X-CSRF-Token", b.Api.XRT)
-    response, _ := b.Api.Client.Do(request)
+    request.Header.Set("X-CSRF-Token", b.api.xrt)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
     cont, _ := ioutil.ReadAll(response.Body)
     return string(cont)
@@ -36,28 +36,28 @@ type AuthUserList struct {
 
 type AuthUser struct {
     Name string
-    Id string
-    BotId string
+    id string
+    botId string
     IsPaymaster bool
     AuthorityType string
-    Api *Api
+    api *Api
 }
 
 func (b *Bot) findAuthUser() {
     request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/userlist/", b.BotId), nil)
     request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
-    request.Header.Set("X-CSRF-Token", b.Api.XRT)
-    response, _ := b.Api.Client.Do(request)
+    request.Header.Set("X-CSRF-Token", b.api.xrt)
+    response, _ := b.api.client.Do(request)
     defer response.Body.Close()
     var ul []AuthUser
     doc, _ := goquery.NewDocumentFromResponse(response)
     doc.Find("div.MdCMN08ImgSet").Each(func(_ int, s *goquery.Selection) {
         t := s.Find("p.mdCMN08Ttl").Text()
         u := parseAuthTxt(t)
-        u.Api = b.Api
-        u.BotId = b.BotId
+        u.api = b.api
+        u.botId = b.BotId
         imgurl, _ := s.Find("div.mdCMN08Img > img").Attr("src")
-        u.Id = imgurl[len(fmt.Sprintf("/%v/userlist/profile/", b.BotId)):]
+        u.id = imgurl[len(fmt.Sprintf("/%v/userlist/profile/", b.BotId)):]
         ul = append(ul, u)
     })
     b.AuthUserList = &AuthUserList{Users: ul}
@@ -96,25 +96,28 @@ func parseAuthTxt(t string) AuthUser {
 }
 
 /*
-DeleteAuthUser eliminate authenticated user
+DeleteAuthUser purges user from bot
  */
 func (u *AuthUser) Delete() error {
     if u.IsPaymaster {
         return errors.New("ERROR: This user is a paymaster. Please execute SetPaymaster to other user.")
     }
-    delurl := fmt.Sprintf("/%v/userlist/del/%v",u.BotId,  u.Id)
+    delurl := fmt.Sprintf("/%v/userlist/del/%v",u.botId,  u.id)
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me%v", delurl), nil)
     request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
-    request.Header.Set("X-CSRF-Token", u.Api.XRT)
-    response, _ := u.Api.Client.Do(request)
+    request.Header.Set("X-CSRF-Token", u.api.xrt)
+    response, _ := u.api.client.Do(request)
     defer response.Body.Close()
     return nil
 }
 
+/*
+SetPaymaster changes payer for this bot
+ */
 func (u AuthUser) SetPaymaster()  {
-    request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/userlist/api/users/payperson/%v", u.BotId, u.Id), nil)
+    request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/userlist/api/users/payperson/%v", u.botId, u.id), nil)
     request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
-    request.Header.Set("X-CSRF-Token", u.Api.XRT)
-    response, _ := u.Api.Client.Do(request)
+    request.Header.Set("X-CSRF-Token", u.api.xrt)
+    response, _ := u.api.client.Do(request)
     defer response.Body.Close()
 }
