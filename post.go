@@ -7,6 +7,8 @@ import (
     "net/url"
     "net/http"
     "strings"
+    "os"
+    "io/ioutil"
 )
 
 /*
@@ -64,17 +66,29 @@ PostText makes it possible to post composed of text only
 func (b *Bot) PostText(text string) {
     v := url.Values{}
     v.Set("csrf_token", b.api.csrfToken1)
-    v.Set("scheduled", "")
-    v.Set("sendDate", "")
-    v.Set("sendHour", "0")
-    v.Set("minutes1", "0")
-    v.Set("minutes2", "0")
-    v.Set("sendTimeType", "NOW")
-    v.Set("contentType1", "TEXT")
     v.Set("body", text)
-    v.Set("draftId", "")
+
     request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/home/api/posts", b.BotId), strings.NewReader(v.Encode()))
     request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
     response, _ := b.api.client.Do(request)
     defer response.Body.Close()
+}
+
+func (b *Bot) SendFirstStage() {
+    file, err := os.Open("/Users/am4ne/Pictures/3398280846-white_kabekin-mw4R-1440x900-MM-100.jpg")
+    if err != nil {
+        // Openエラー処理
+    }
+    defer file.Close()
+    v := url.Values{}
+    var output string
+    file.Write([]byte(output))
+    v.Set("file", output)
+    v.Set("csrf_token", b.api.csrfToken1)
+    request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/home/api/posts", b.BotId), strings.NewReader(v.Encode()))
+    request.Header.Set("Content-Type", "multipart/form-data; boundary=----WebKitFormBoundaryuPiicl3hB2rPuzwJ")
+    response, _ := b.api.client.Do(request)
+    defer response.Body.Close()
+    cont, _ := ioutil.ReadAll(response.Body)
+    fmt.Println(string(cont))
 }

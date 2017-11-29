@@ -45,7 +45,6 @@ func main()  {
 ## What is "@LINEID"?
 ![lineId](https://user-images.githubusercontent.com/33578715/33206339-35ebeb4a-d14d-11e7-94cd-a1b8a69d4031.jpg)
 
-
 ## Todo
 - [x] Enable to select authority type in getAuth function
 - [x] Enable to Delete paymaster user's clearance
@@ -53,7 +52,10 @@ func main()  {
 - [ ] Enable to Post image or video on time line
 - [ ] Fix DeletePostAll function
 
+
+
 ### At last
 Probably, being overlook some factors, I can't code Login() function without web driver
+(I'm working at dev branch. See login2 function)
 
-So If it's possible, please make Login() function more better and send pull request:)
+If it's possible, please make Login() function more better and send pull request:)

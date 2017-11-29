@@ -15,8 +15,11 @@ import (
     "encoding/json"
     "github.com/mattn/go-scan"
     "strconv"
-    "github.com/PuerkitoBio/goquery"
     "github.com/pkg/errors"
+    "math/big"
+    "crypto/rsa"
+    "crypto/rand"
+    "github.com/PuerkitoBio/goquery"
 )
 
 type Bot struct {
@@ -54,8 +57,8 @@ func (a *Api) NewBot(lineId string) (Bot, error) {
     if err != nil {
         return bot,  err
     }
-    go bot.getCsrfToken1()
-    go bot.getCsrfToken2()
+    bot.getCsrfToken1()
+    bot.getCsrfToken2()
     bot.findAuthUser()
     return bot, nil
 }
@@ -113,6 +116,80 @@ func (a *Api) login() {
     a.getXRT()
 }
 
+/*
+try to login by means of http request
+out of order
+ */
+func login2(mail, password string)  {
+    jar, _ := cookiejar.New(nil)
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{ServerName: "*.line.me"},
+    }
+    client := &http.Client{
+        Transport: tr,
+        Jar: jar,
+    }
+    request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
+    response, _ := client.Do(request)
+    defer response.Body.Close()
+    doc, _ := goquery.NewDocumentFromResponse(response)
+    captchaKey, _ := doc.Find("input#captchaKey").Attr("value")
+    redirectUri, _ := doc.Find("input#redirectUrl").Attr("value")
+    redirectUri, _= url.QueryUnescape(redirectUri)
+    state, _ := doc.Find("input#state").Attr("value")
+    v, vv := getRsaKeyAndSessionKey()
+    cip := rsaEncrypt(v, vv[1], mail, password)
+    sendMAPW(mail, cip, vv[0], captchaKey, redirectUri, state, client)
+}
+
+/*
+rsaEncrypt encrypt
+ */
+func rsaEncrypt(sessionKey, publicModules, mail, pass string) string {
+    modInt := new(big.Int)
+    modInt.SetString(publicModules, 16)
+    var ex, _ = strconv.ParseInt("10001",16,0)
+    var pub = rsa.PublicKey{N: modInt, E: int(ex)}
+
+    var msg = []byte(fmt.Sprintf("%v%v %v", sessionKey, mail, pass))
+
+    var encryption, _ = rsa.EncryptPKCS1v15(rand.Reader, &pub, msg)
+
+    encrypted := new(big.Int)
+    encrypted.SetBytes(encryption)
+    return fmt.Sprintf("%x", encrypted)
+}
+
+/*
+Out of order
+ */
+func sendMAPW(mail, cip, key, cpk, ruri, state string, client *http.Client) {
+    v := url.Values{}
+    v.Add("userId", mail)
+    v.Add("id", key)
+    v.Add("password", cip)
+    v.Add("idProvider", "1")
+    v.Add("response_mode", "")
+    v.Add("otpId", "")
+    v.Add("scope", "")
+    v.Add("response_type", "code")
+    v.Add("client_id", "1459630796")
+    v.Add("redirect_uri", ruri)
+    v.Add("displayType", "b")
+    v.Add("state", state)
+    v.Add("forceSecondVerification", "")
+    v.Add("showPermissionApproval", "")
+    v.Add("captchaKey", cpk)
+    request, _ := http.NewRequest("POST", "https://access.line.me/dialog/oauth/authenticate", strings.NewReader(v.Encode()))
+    request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+    client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+        return http.ErrUseLastResponse
+    }
+    response, _ := client.Do(request)
+    defer response.Body.Close()
+    fmt.Println(response.Header["Location"][0])
+}
+
 func (a *Api) createClient(c []*http.Cookie) {
     jar, _ := cookiejar.New(nil)
     u, _ := url.Parse("https://admin-official.line.me/")
@@ -156,42 +233,6 @@ func (b *Bot) getBotInfo() error {
     return nil
 }
 
-func (a *Api) getXRT()  {
-    request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
-    response, _ := a.client.Do(request)
-    defer response.Body.Close()
-    cont, _ := ioutil.ReadAll(response.Body)
-    XRT := string(cont)[strings.Index(string(cont), "XRT") + 7:strings.Index(string(cont), "XRT") + 60]
-    XRT = XRT[:strings.Index(XRT, ";") - 1]
-    a.xrt = XRT
-}
-
-func (b *Bot) getCsrfToken1() {
-    request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
-    response, _ := b.api.client.Do(request)
-    defer response.Body.Close()
-
-    doc, err := goquery.NewDocumentFromResponse(response)
-    if err != nil {
-        log.Fatalf("create document error: %v", err)
-    }
-    s := doc.Find("script#postEditForm\\.html").Text()
-
-    doc2, err := goquery.NewDocumentFromReader(strings.NewReader(s))
-    if err != nil {
-        log.Fatalf("create document error: %v", err)
-    }
-    b.api.csrfToken1,  _ = doc2.Find("#postForm > input").First().Attr("value")
-}
-
-func (b *Bot) getCsrfToken2()  {
-    request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/resign/", b.BotId), nil)
-    response, _ := b.api.client.Do(request)
-    defer response.Body.Close()
-    doc, _ := goquery.NewDocumentFromResponse(response)
-    b.api.csrfToken2, _ = doc.Find("form > input").Attr("value")
-}
-
 /*
 DeleteBot eliminates itself
  */
@@ -204,7 +245,6 @@ func (b *Bot) DeleteBot()  {
     request.Header.Set("Upgrade-Insecure-Requests", "1")
     response, _ := b.api.client.Do(request)
     defer response.Body.Close()
-    fmt.Println(response.StatusCode)
 }
 
 func timer(wait int, ctx context.Context, l *bool) {
