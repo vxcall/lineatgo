@@ -135,7 +135,6 @@ func login2(mail, password string)  {
     doc, _ := goquery.NewDocumentFromResponse(response)
     captchaKey, _ := doc.Find("input#captchaKey").Attr("value")
     redirectUri, _ := doc.Find("input#redirectUrl").Attr("value")
-    redirectUri, _= url.QueryUnescape(redirectUri)
     state, _ := doc.Find("input#state").Attr("value")
     v, vv := getRsaKeyAndSessionKey()
     cip := rsaEncrypt(v, vv[1], mail, password)
@@ -148,8 +147,7 @@ rsaEncrypt encrypt
 func rsaEncrypt(sessionKey, publicModules, mail, pass string) string {
     modInt := new(big.Int)
     modInt.SetString(publicModules, 16)
-    var ex, _ = strconv.ParseInt("10001",16,0)
-    var pub = rsa.PublicKey{N: modInt, E: int(ex)}
+    var pub = rsa.PublicKey{N: modInt, E: 65537}
 
     var msg = []byte(fmt.Sprintf("%v%v %v", sessionKey, mail, pass))
 
@@ -187,7 +185,7 @@ func sendMAPW(mail, cip, key, cpk, ruri, state string, client *http.Client) {
     }
     response, _ := client.Do(request)
     defer response.Body.Close()
-    fmt.Println(response.Header["Location"][0])
+    fmt.Println(response.Location())
 }
 
 func (a *Api) createClient(c []*http.Cookie) {
