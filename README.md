@@ -2,7 +2,7 @@
 [![GoWalker](http://gowalker.org/api/v1/badge)](https://gowalker.org/github.com/s3pt3mb3r/lineatgo)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 # lineatgo
-This is a unofficial LINE@ API that was implemented in pure go
+This is an unofficial LINE@ API that was implemented in pure go
 
 ## installation
 ```
