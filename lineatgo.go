@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/mattn/go-scan"
 	"github.com/pkg/errors"
 	"github.com/sclevine/agouti"
 )
@@ -202,29 +201,30 @@ func (a *Api) createClient(c []*http.Cookie) {
 	}
 }
 
+type BotList struct {
+	List []struct {
+		BotId       int    `json: "botId"`
+		DisplayName string `json: "displayName"`
+		LineId      string `json: "lineId"`
+	} `json: "list"`
+}
+
 func (b *Bot) getBotInfo() error {
 	request, _ := http.NewRequest("GET", "https://admin-official.line.me/api/basic/bot/list?_=1510425201579&count=10&page=1", nil)
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	response, _ := b.api.client.Do(request)
 	defer response.Body.Close()
 	cont, _ := ioutil.ReadAll(response.Body)
-	var ij interface{}
-	json.Unmarshal([]byte(string(cont)), &ij)
-	var (
-		displayName string
-		lineId      string
-		botId       int
-	)
-	for i := 0; i < strings.Count(string(cont), "botId"); i++ {
-		scan.ScanTree(ij, fmt.Sprintf("/list[%v]/lineId", i), &lineId)
-		if lineId != b.LineId {
-			continue
+	var bl BotList
+	err := json.Unmarshal(cont, &bl)
+	if err != nil {
+		fmt.Println(err)
+	}
+	for _, i := range bl.List {
+		if i.LineId == b.LineId {
+			b.BotId = strconv.Itoa(i.BotId)
+			b.Name = i.DisplayName
 		}
-		scan.ScanTree(ij, fmt.Sprintf("/list[%v]/displayName", i), &displayName)
-		scan.ScanTree(ij, fmt.Sprintf("/list[%v]/botId", i), &botId)
-		b.Name = displayName
-		b.BotId = strconv.Itoa(botId)
-		break
 	}
 	if b.Name == "" {
 		return errors.New(fmt.Sprintf(`ERROR: Specified bot "%v" was not found.\nUse other LINE account and try again:)`, b.LineId))
