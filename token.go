@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/mattn/go-scan"
 )
 
 func (a *Api) getXRT() {
@@ -51,6 +50,11 @@ func (b *Bot) getCsrfToken2() {
 	b.api.csrfToken2, _ = doc.Find("form > input").Attr("value")
 }
 
+type LKey struct {
+	RsaKey     string `json: "rsa_key"`
+	SessionKey string `json: "session_key"`
+}
+
 func getRsaKeyAndSessionKey() (string, []string) {
 	client := &http.Client{}
 	unixTime := time.Now().Local().UnixNano()
@@ -62,13 +66,12 @@ func getRsaKeyAndSessionKey() (string, []string) {
 	resp, _ := client.Do(req)
 	defer resp.Body.Close()
 	cont, _ := ioutil.ReadAll(resp.Body)
-	var ij interface{}
-	json.Unmarshal([]byte(string(cont)), &ij)
-	var (
-		sessionKey string
-		rsaKey     string
-	)
-	scan.ScanTree(ij, "/session_key", &sessionKey)
-	scan.ScanTree(ij, "/rsa_key", &rsaKey)
-	return sessionKey, strings.Split(rsaKey, ",")
+	var lkey struct {
+		SessionKey string `json:"session_key"`
+		RsaKey     string `json:"rsa_key"`
+	}
+	if err := json.Unmarshal(cont, &lkey); err != nil {
+		fmt.Println("JSON Unmarshal error:", err)
+	}
+	return lkey.SessionKey, strings.Split(lkey.RsaKey, ",")
 }
