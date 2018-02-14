@@ -17,7 +17,7 @@ import (
     "github.com/s3pt3mb3r/lineatgo"
     "log"
     "fmt"
-    "os
+    "os"
 )
 
 func main()  {
@@ -26,11 +26,22 @@ func main()  {
     if err != nil {
         log.Println(err)
     }
-    bot.PostText("This is a post via lineatgo")
+
+    //post
+    p := bot.NewPost()
+	p.Add("text", "This is a")
+	p.Add("text", "test")
+	p.Add("image", "/Path/To/photo.jpg")
+	p.Add("image", "/Path/To/photo.jpg")
+	p.Add("image", "Path/To/video.mp4")
+    p.Post()
+    
+    //you can get a auth URL
     url := bot.GetAuthURL(lineatgo.Administrator)
     //else: lineatgo.Operator, lineatgo.LimitedOperator, lineatgo.Messenger
     fmt.Println(url)
 
+    //You can get your QR code
     qr := bot.GetQRCode()
 
     file, err := os.OpenFile("test.png", os.O_RDWR|os.O_CREATE, 0666)
@@ -49,7 +60,7 @@ func main()  {
 - [x] Enable to select authority type in getAuth function
 - [x] Enable to Delete paymaster user's clearance
 - [x] Enable to Post some text on time line
-- [ ] Enable to Post image or video on time line
+- [x] Enable to Post image or video on time line
 - [ ] Fix DeletePostAll function
 
 

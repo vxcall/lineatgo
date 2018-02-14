@@ -15,6 +15,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+var us string
+
 func (a *Api) getXRT() {
 	request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
 	response, _ := a.client.Do(request)
@@ -26,7 +28,7 @@ func (a *Api) getXRT() {
 
 func (b *Bot) getCsrfToken1() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
-	response, _ := b.api.client.Do(request)
+	response, _ := b.client.Do(request)
 	defer response.Body.Close()
 
 	doc, err := goquery.NewDocumentFromResponse(response)
@@ -39,27 +41,23 @@ func (b *Bot) getCsrfToken1() {
 	if err != nil {
 		log.Fatalf("create document error: %v", err)
 	}
-	b.api.csrfToken1, _ = doc2.Find("#postForm > input").First().Attr("value")
+	b.csrfToken1, _ = doc2.Find("#postForm > input").First().Attr("value")
 }
 
 func (b *Bot) getCsrfToken2() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/resign/", b.BotId), nil)
-	response, _ := b.api.client.Do(request)
+	response, _ := b.client.Do(request)
 	defer response.Body.Close()
 	doc, _ := goquery.NewDocumentFromResponse(response)
-	b.api.csrfToken2, _ = doc.Find("form > input").Attr("value")
-}
-
-type LKey struct {
-	RsaKey     string `json: "rsa_key"`
-	SessionKey string `json: "session_key"`
+	b.csrfToken2, _ = doc.Find("form > input").Attr("value")
 }
 
 func getRsaKeyAndSessionKey() (string, []string) {
 	client := &http.Client{}
 	unixTime := time.Now().Local().UnixNano()
-	us := strconv.FormatInt(unixTime, 10)
-	v := url.Values{"_": {us[:len(us)-6]}}
+	us = strconv.FormatInt(unixTime, 10)
+	us = us[:len(us)-6]
+	v := url.Values{"_": {us}}
 	req, _ := http.NewRequest("GET", "https://access.line.me/authct/v1/keys/line", nil)
 	req.Header.Set("Referer", "https://access.line.me/")
 	req.URL.RawQuery = v.Encode()

@@ -23,10 +23,10 @@ import (
 )
 
 type Bot struct {
-	Name         string
-	LineId       string
-	BotId        string
-	api          *Api
+	Name   string
+	LineId string
+	BotId  string
+	*Api
 	AuthUserList *AuthUserList
 }
 
@@ -37,6 +37,7 @@ type Api struct {
 	xrt         string
 	csrfToken1  string
 	csrfToken2  string
+	sse         string
 }
 
 /*
@@ -52,7 +53,7 @@ func NewApi(mail, pass string) *Api {
 NewBot creates a new bot.
 */
 func (a *Api) NewBot(lineId string) (Bot, error) {
-	var bot = Bot{LineId: lineId, api: a}
+	var bot = Bot{LineId: lineId, Api: a}
 	err := bot.getBotInfo()
 	if err != nil {
 		return bot, err
@@ -201,21 +202,19 @@ func (a *Api) createClient(c []*http.Cookie) {
 	}
 }
 
-type BotList struct {
-	List []struct {
-		BotId       int    `json: "botId"`
-		DisplayName string `json: "displayName"`
-		LineId      string `json: "lineId"`
-	} `json: "list"`
-}
-
 func (b *Bot) getBotInfo() error {
 	request, _ := http.NewRequest("GET", "https://admin-official.line.me/api/basic/bot/list?_=1510425201579&count=10&page=1", nil)
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
-	response, _ := b.api.client.Do(request)
+	response, _ := b.client.Do(request)
 	defer response.Body.Close()
 	cont, _ := ioutil.ReadAll(response.Body)
-	var bl BotList
+	var bl struct {
+		List []struct {
+			BotId       int    `json: "botId"`
+			DisplayName string `json: "displayName"`
+			LineId      string `json: "lineId"`
+		} `json: "list"`
+	}
 	err := json.Unmarshal(cont, &bl)
 	if err != nil {
 		fmt.Println(err)
@@ -237,12 +236,12 @@ DeleteBot eliminates itself
 */
 func (b *Bot) DeleteBot() {
 	v := url.Values{}
-	v.Set("csrf_token", b.api.csrfToken2)
+	v.Set("csrf_token", b.csrfToken2)
 	v.Set("agree", "on")
 	request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/resign/", b.BotId), strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Upgrade-Insecure-Requests", "1")
-	response, _ := b.api.client.Do(request)
+	response, _ := b.client.Do(request)
 	defer response.Body.Close()
 }
 
