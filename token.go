@@ -17,7 +17,7 @@ import (
 
 var us string
 
-func (a *Api) getXRT() {
+func (a *api) getXRT() {
 	request, _ := http.NewRequest("GET", "https://admin-official.line.me/", nil)
 	response, _ := a.client.Do(request)
 	defer response.Body.Close()
@@ -26,7 +26,7 @@ func (a *Api) getXRT() {
 	a.xrt = xrt[11 : len(xrt)-1]
 }
 
-func (b *Bot) getCsrfToken1() {
+func (b *bot) getCsrfToken1() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
 	response, _ := b.client.Do(request)
 	defer response.Body.Close()
@@ -44,7 +44,7 @@ func (b *Bot) getCsrfToken1() {
 	b.csrfToken1, _ = doc2.Find("#postForm > input").First().Attr("value")
 }
 
-func (b *Bot) getCsrfToken2() {
+func (b *bot) getCsrfToken2() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/resign/", b.BotId), nil)
 	response, _ := b.client.Do(request)
 	defer response.Body.Close()

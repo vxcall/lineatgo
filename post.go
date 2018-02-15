@@ -20,7 +20,7 @@ import (
 /*
 DeletePostAll deletes all of post the account has.
 */
-func (b *Bot) DeletePostAll() {
+func (b *bot) DeletePostAll() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
 	response, _ := b.client.Do(request)
 	defer response.Body.Close()
@@ -36,7 +36,7 @@ func (b *Bot) DeletePostAll() {
 	fmt.Println(notice)
 }
 
-func (b *Bot) retrievePost(doc *goquery.Document, endChan chan bool) {
+func (b *bot) retrievePost(doc *goquery.Document, endChan chan bool) {
 	doc.Find("div.mdCMN13Foot > a").Each(func(_ int, s *goquery.Selection) {
 		url, _ := s.Attr("href")
 		deluri := fmt.Sprintf("https://admin-official.line.me/%v/home/%v/delete", b.BotId, url[2:len(url)-9])
@@ -57,7 +57,7 @@ func (b *Bot) retrievePost(doc *goquery.Document, endChan chan bool) {
 	}
 }
 
-func (b *Bot) postDel(uri string, endChan chan bool) {
+func (b *bot) postDel(uri string, endChan chan bool) {
 	v := url.Values{"csrf_token": {b.csrfToken1}}
 	request, _ := http.NewRequest("POST", uri, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
@@ -78,12 +78,12 @@ type post struct {
 	Image7   string
 	Image8   string
 	Text     string
-	*Api
-	*Bot
+	*api
+	*bot
 }
 
-func (b *Bot) NewPost() *post {
-	return &post{position: 0, Api: b.Api, Bot: b}
+func (b *bot) NewPost() *post {
+	return &post{position: 0, api: b.api, bot: b}
 }
 
 func (p *post) Add(category string, content string) {
@@ -207,7 +207,7 @@ type imageData struct {
 	} `json:"media"`
 }
 
-func (b *Bot) getObjectData(path string) imageData {
+func (b *bot) getObjectData(path string) imageData {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 	f, err := os.Open(path)

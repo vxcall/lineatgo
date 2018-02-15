@@ -21,7 +21,7 @@ const (
 /*
 GetAuthURL retrieves a url to enable access the account.
 */
-func (b *Bot) GetAuthURL(role string) string {
+func (b *bot) GetAuthURL(role string) string {
 	v := url.Values{"role": {role}}
 	request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/userlist/auth/url", b.BotId), strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
@@ -42,10 +42,10 @@ type AuthUser struct {
 	botId         string
 	IsPaymaster   bool
 	AuthorityType string
-	*Api
+	*api
 }
 
-func (b *Bot) findAuthUser() {
+func (b *bot) findAuthUser() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/userlist/", b.BotId), nil)
 	request.Header.Set("Content-Type", "text/plain;charset=UTF-8")
 	request.Header.Set("X-CSRF-Token", b.xrt)
@@ -55,7 +55,7 @@ func (b *Bot) findAuthUser() {
 	doc, _ := goquery.NewDocumentFromResponse(response)
 	doc.Find("div.MdCMN08ImgSet").Each(func(_ int, s *goquery.Selection) {
 		t := s.Find("p.mdCMN08Ttl").Text()
-		u := parseAuthTxt(t, AuthUser{Api: b.Api})
+		u := parseAuthTxt(t, AuthUser{api: b.api})
 		u.botId = b.BotId
 		imgurl, _ := s.Find("div.mdCMN08Img > img").Attr("src")
 		u.id = imgurl[len(fmt.Sprintf("/%v/userlist/profile/", b.BotId)):]
