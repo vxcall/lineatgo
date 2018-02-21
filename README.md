@@ -4,10 +4,21 @@
 # lineatgo
 This is an unofficial LINE@ API that was implemented in pure go
 
+## Particular Requirement
+- ChromeDriver
+
 ## installation
+**package**
 ```
 go get github.com/s3pt3mb3r/lineatgo
 ```
+**ChromeDriver**
+for homebrew user
+```
+brew install chromedriver
+```
+for windows user
+![Download link](http://chromedriver.storage.googleapis.com/index.html?path=2.25/)
 
 ## Usage
 ```go
