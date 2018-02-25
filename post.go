@@ -20,7 +20,7 @@ import (
 /*
 DeletePostAll deletes all of post the account has.
 */
-func (b *bot) DeletePostAll() {
+func (b *Bot) DeletePostAll() {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/home/", b.BotId), nil)
 	response, _ := b.client.Do(request)
 	defer response.Body.Close()
@@ -36,7 +36,7 @@ func (b *bot) DeletePostAll() {
 	fmt.Println(notice)
 }
 
-func (b *bot) retrievePost(doc *goquery.Document, endChan chan bool) {
+func (b *Bot) retrievePost(doc *goquery.Document, endChan chan bool) {
 	doc.Find("div.mdCMN13Foot > a").Each(func(_ int, s *goquery.Selection) {
 		url, _ := s.Attr("href")
 		deluri := fmt.Sprintf("https://admin-official.line.me/%v/home/%v/delete", b.BotId, url[2:len(url)-9])
@@ -57,7 +57,7 @@ func (b *bot) retrievePost(doc *goquery.Document, endChan chan bool) {
 	}
 }
 
-func (b *bot) postDel(uri string, endChan chan bool) {
+func (b *Bot) postDel(uri string, endChan chan bool) {
 	v := url.Values{"csrf_token": {b.csrfToken1}}
 	request, _ := http.NewRequest("POST", uri, strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
@@ -66,7 +66,7 @@ func (b *bot) postDel(uri string, endChan chan bool) {
 	endChan <- true
 }
 
-type post struct {
+type Post struct {
 	position int
 	Image0   string
 	Image1   string
@@ -78,21 +78,21 @@ type post struct {
 	Image7   string
 	Image8   string
 	Text     string
-	*api
-	*bot
+	*Api
+	*Bot
 }
 
 /*
 NewPost initialize post struct which can be added component
 */
-func (b *bot) NewPost() *post {
-	return &post{position: 0, api: b.api, bot: b}
+func (b *Bot) NewPost() *Post {
+	return &Post{position: 0, Api: b.Api, Bot: b}
 }
 
 /*
 Add add post component, like text or images
 */
-func (p *post) Add(category string, content string) {
+func (p *Post) Add(category string, content string) {
 	switch category {
 	case "image":
 		switch p.position {
@@ -130,7 +130,7 @@ func (p *post) Add(category string, content string) {
 /*
 Post makes it possible to post composed of text and images(photos videos)
 */
-func (p *post) Post() {
+func (p *Post) Post() {
 	var paths []string
 	if p.Image0 != "" {
 		paths = append(paths, p.Image0)
@@ -182,7 +182,7 @@ func (p *post) Post() {
 	defer response.Body.Close()
 }
 
-func (p *post) customizeReq(comp []imageData) *http.Request {
+func (p *Post) customizeReq(comp []imageData) *http.Request {
 	v := url.Values{"csrf_token": {p.csrfToken1}, "scheduled": {""}, "tzOffset": {"-540"}, "sendDate": {""}, "sendHour": {"0"}, "minutes1": {"0"}, "minutes2": {"0"}, "sendTimeType": {"NOW"}, "contentType1": {"MULTI_IMAGE"}, "draftId": {""}}
 	v.Set("body", p.Text)
 
@@ -213,7 +213,7 @@ type imageData struct {
 	} `json:"media"`
 }
 
-func (b *bot) getObjectData(path string) imageData {
+func (b *Bot) getObjectData(path string) imageData {
 	var buf bytes.Buffer
 	w := multipart.NewWriter(&buf)
 	f, err := os.Open(path)

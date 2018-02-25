@@ -13,7 +13,7 @@ import (
 /*
 SetName names bot
 */
-func (b *bot) SetName(newName string) {
+func (b *Bot) SetName(newName string) {
 	v := url.Values{"role": {b.BotId}, "type": {"profile"}, "dataType": {"name"}, "name": {newName}}
 	request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/account/profile/name", b.BotId), strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
@@ -25,7 +25,7 @@ func (b *bot) SetName(newName string) {
 /*
 SetStatusMessage set status message(IOW hitokoto)
 */
-func (b *bot) SetStatusMessage(newStatusMessage string) {
+func (b *Bot) SetStatusMessage(newStatusMessage string) {
 	v := url.Values{"role": {b.BotId}, "type": {"profile"}, "dataType": {"hitokoto"}, "hitokoto": {newStatusMessage}}
 	request, _ := http.NewRequest("POST", fmt.Sprintf("https://admin-official.line.me/%v/account/profile/hitokoto", b.BotId), strings.NewReader(v.Encode()))
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
@@ -37,7 +37,7 @@ func (b *bot) SetStatusMessage(newStatusMessage string) {
 /*
 GetQRCode gets qr code as byte slice
 */
-func (b *bot) GetQRCode() []byte {
+func (b *Bot) GetQRCode() []byte {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/account/", b.BotId), nil)
 	response, _ := b.client.Do(request)
 	defer response.Body.Close()
@@ -53,7 +53,7 @@ func (b *bot) GetQRCode() []byte {
 /*
 GetFriendLink gets "LINE Add Link".
 */
-func (b *bot) GetFriendLink() string {
+func (b *Bot) GetFriendLink() string {
 	request, _ := http.NewRequest("GET", fmt.Sprintf("https://admin-official.line.me/%v/account/", b.BotId), nil)
 	response, _ := b.client.Do(request)
 	defer response.Body.Close()

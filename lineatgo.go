@@ -22,15 +22,15 @@ import (
 	"github.com/sclevine/agouti"
 )
 
-type bot struct {
+type Bot struct {
 	Name   string
 	LineId string
 	BotId  string
-	*api
+	*Api
 	AuthUserList *AuthUserList
 }
 
-type api struct {
+type Api struct {
 	mailAddress string
 	password    string
 	client      *http.Client
@@ -43,8 +43,8 @@ type api struct {
 /*
 NewApi creates a new api.
 */
-func NewApi(mail, pass string) *api {
-	var api = api{mailAddress: mail, password: pass}
+func NewApi(mail, pass string) *Api {
+	var api = Api{mailAddress: mail, password: pass}
 	api.login()
 	return &api
 }
@@ -52,8 +52,8 @@ func NewApi(mail, pass string) *api {
 /*
 NewBot creates a new bot.
 */
-func (a *api) NewBot(lineId string) (bot, error) {
-	var bot = bot{LineId: lineId, api: a}
+func (a *Api) NewBot(lineId string) (Bot, error) {
+	var bot = Bot{LineId: lineId, Api: a}
 	err := bot.getBotInfo()
 	if err != nil {
 		return bot, err
@@ -64,7 +64,7 @@ func (a *api) NewBot(lineId string) (bot, error) {
 	return bot, nil
 }
 
-func (a *api) login() {
+func (a *Api) login() {
 	driver := agouti.ChromeDriver(agouti.ChromeOptions("args", []string{"--headless", "--disable-gpu"}))
 	if err := driver.Start(); err != nil {
 		log.Fatalf("Failed to start driver:%v", err)
@@ -189,7 +189,7 @@ func sendMAPW(mail, cip, key, cpk, ruri, state string, client *http.Client) {
 	fmt.Println(response.Location())
 }
 
-func (a *api) createClient(c []*http.Cookie) {
+func (a *Api) createClient(c []*http.Cookie) {
 	jar, _ := cookiejar.New(nil)
 	u, _ := url.Parse("https://admin-official.line.me/")
 	jar.SetCookies(u, c)
@@ -202,7 +202,7 @@ func (a *api) createClient(c []*http.Cookie) {
 	}
 }
 
-func (b *bot) getBotInfo() error {
+func (b *Bot) getBotInfo() error {
 	request, _ := http.NewRequest("GET", "https://admin-official.line.me/api/basic/bot/list?_=1510425201579&count=10&page=1", nil)
 	request.Header.Set("Content-Type", "application/json;charset=UTF-8")
 	response, _ := b.client.Do(request)
@@ -234,7 +234,7 @@ func (b *bot) getBotInfo() error {
 /*
 DeleteBot eliminates itself
 */
-func (b *bot) DeleteBot() {
+func (b *Bot) DeleteBot() {
 	v := url.Values{}
 	v.Set("csrf_token", b.csrfToken2)
 	v.Set("agree", "on")
