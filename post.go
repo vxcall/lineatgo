@@ -82,10 +82,16 @@ type post struct {
 	*bot
 }
 
+/*
+NewPost initialize post struct which can be added component
+*/
 func (b *bot) NewPost() *post {
 	return &post{position: 0, api: b.api, bot: b}
 }
 
+/*
+Add add post component, like text or images
+*/
 func (p *post) Add(category string, content string) {
 	switch category {
 	case "image":
@@ -168,7 +174,7 @@ func (p *post) Post() {
 		u.Media.ObjectId = ""
 		comp = append(comp, u)
 	}
-	request := p.customReq(comp)
+	request := p.customizeReq(comp)
 	response, err := p.client.Do(request)
 	if err != nil {
 		log.Println(err)
@@ -176,7 +182,7 @@ func (p *post) Post() {
 	defer response.Body.Close()
 }
 
-func (p *post) customReq(comp []imageData) *http.Request {
+func (p *post) customizeReq(comp []imageData) *http.Request {
 	v := url.Values{"csrf_token": {p.csrfToken1}, "scheduled": {""}, "tzOffset": {"-540"}, "sendDate": {""}, "sendHour": {"0"}, "minutes1": {"0"}, "minutes2": {"0"}, "sendTimeType": {"NOW"}, "contentType1": {"MULTI_IMAGE"}, "draftId": {""}}
 	v.Set("body", p.Text)
 

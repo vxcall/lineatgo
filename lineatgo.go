@@ -160,7 +160,7 @@ func rsaEncrypt(sessionKey, publicModules, mail, pass string) string {
 }
 
 /*
-Out of order
+OUT OF ORDER
 */
 func sendMAPW(mail, cip, key, cpk, ruri, state string, client *http.Client) {
 	v := url.Values{}

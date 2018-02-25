@@ -13,6 +13,7 @@ This is an unofficial LINE@ API that was implemented in pure go
 go get github.com/s3pt3mb3r/lineatgo
 ```
 **ChromeDriver**
+
 for homebrew user
 ```
 brew install chromedriver
