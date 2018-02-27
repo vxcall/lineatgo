@@ -104,7 +104,6 @@ Post makes it possible to post composed of text and images(photos videos)
 */
 func (p *Post) Post() {
 	var comp []imageData
-	fmt.Println(p.Images)
 	count := len(p.Images)
 	for _, i := range p.Images {
 		imd := p.getObjectData(i)
