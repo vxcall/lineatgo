@@ -41,11 +41,9 @@ func main()  {
 
     //post
     p := bot.NewPost()
-	p.Add("text", "This is a")
+    p.Add("text", "This", " is", " a")
 	p.Add("text", "test")
-	p.Add("image", "/Path/To/photo.jpg")
-	p.Add("image", "/Path/To/photo.jpg")
-	p.Add("image", "Path/To/video.mp4")
+	p.Add("image", "/Path/To/photo.jpg", "/Path/To/photo2.jpg", "Path/To/video.mp4")
     p.Post()
     
     //you can get a auth URL

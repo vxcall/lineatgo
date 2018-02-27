@@ -67,17 +67,8 @@ func (b *Bot) postDel(uri string, endChan chan bool) {
 }
 
 type Post struct {
-	position int
-	Image0   string
-	Image1   string
-	Image2   string
-	Image3   string
-	Image4   string
-	Image5   string
-	Image6   string
-	Image7   string
-	Image8   string
-	Text     string
+	Images []string
+	Text   string
 	*Api
 	*Bot
 }
@@ -86,43 +77,24 @@ type Post struct {
 NewPost initialize post struct which can be added component
 */
 func (b *Bot) NewPost() *Post {
-	return &Post{position: 0, Api: b.Api, Bot: b}
+	return &Post{Api: b.Api, Bot: b}
 }
 
 /*
 Add add post component, like text or images
 */
-func (p *Post) Add(category string, content string) {
+func (p *Post) Add(category string, content ...string) {
 	switch category {
 	case "image":
-		switch p.position {
-		case 0:
-			p.Image0 = content
-		case 1:
-			p.Image1 = content
-		case 2:
-			p.Image2 = content
-		case 3:
-			p.Image3 = content
-		case 4:
-			p.Image4 = content
-		case 5:
-			p.Image5 = content
-		case 6:
-			p.Image6 = content
-		case 7:
-			p.Image7 = content
-		case 8:
-			p.Image8 = content
-		default:
-			return
+		p.Images = append(p.Images, content...)
+		if len(p.Images) > 9 {
+			p.Images = p.Images[:9]
 		}
-		p.position++
 	case "text":
 		if p.Text != "" {
-			p.Text = p.Text + ("\n" + content)
+			p.Text = p.Text + ("\n" + strings.Join(content, ""))
 		} else {
-			p.Text = content
+			p.Text = strings.Join(content, "")
 		}
 	}
 }
@@ -131,38 +103,10 @@ func (p *Post) Add(category string, content string) {
 Post makes it possible to post composed of text and images(photos videos)
 */
 func (p *Post) Post() {
-	var paths []string
-	if p.Image0 != "" {
-		paths = append(paths, p.Image0)
-	}
-	if p.Image1 != "" {
-		paths = append(paths, p.Image1)
-	}
-	if p.Image2 != "" {
-		paths = append(paths, p.Image2)
-	}
-	if p.Image3 != "" {
-		paths = append(paths, p.Image3)
-	}
-	if p.Image4 != "" {
-		paths = append(paths, p.Image4)
-	}
-	if p.Image5 != "" {
-		paths = append(paths, p.Image5)
-	}
-	if p.Image6 != "" {
-		paths = append(paths, p.Image6)
-	}
-	if p.Image7 != "" {
-		paths = append(paths, p.Image7)
-	}
-	if p.Image8 != "" {
-		paths = append(paths, p.Image8)
-	}
 	var comp []imageData
-
-	count := len(paths)
-	for _, i := range paths {
+	fmt.Println(p.Images)
+	count := len(p.Images)
+	for _, i := range p.Images {
 		imd := p.getObjectData(i)
 		comp = append(comp, imd)
 	}
