@@ -4,6 +4,9 @@
 # lineatgo
 This is an unofficial LINE@ API that was implemented in pure go
 
+# This project is no longer maintained
+This will be not maintained because of my motivation.
+If you send me some pull request, perhaps it affect my motivation.
 ## Particular Requirement
 - ChromeDriver
 
